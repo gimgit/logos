@@ -1,0 +1,107 @@
+# airflow-webserver-deployment.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-webserver
+  namespace: airflow
+spec:
+  ports:
+    - port: 8080
+  selector:
+    app: airflow-webserver
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-webserver
+  namespace: airflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-webserver
+  template:
+    metadata:
+      labels:
+        app: airflow-webserver
+    spec:
+      containers:
+        - name: airflow-webserver
+          image: apache/airflow:2.5.1
+          # command: ["airflow", "db", "init"]
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Initializing Airflow database..."
+              airflow db init || { echo 'Failed to initialize database'; exit 1; }
+
+              echo "Starting Airflow webserver..."
+              airflow webserver &
+
+              echo "Checking if admin user exists..."
+              # Wait for the webserver to be ready (optional, improves reliability)
+              while ! curl -s http://localhost:8080/health; do
+                echo "Waiting for webserver to be ready..."
+                sleep 5
+              done
+
+              # Create admin user if it does not exist
+              if ! airflow users list | grep -q admin; then
+                echo "Creating admin user..."
+                airflow users create \
+                  --username admin \
+                  --firstname Ad \
+                  --lastname min \
+                  --role Admin \
+                  --email admin@example.com \
+                  --password admin123
+              else
+                echo "Admin user already exists."
+              fi
+
+              # Ensure webserver keeps running
+              wait
+          env:
+            - name: AIRFLOW__CORE__EXECUTOR
+              value: CeleryExecutor
+            - name: AIRFLOW__CORE__SQL_ALCHEMY_CONN
+              value: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+            - name: AIRFLOW__CELERY__BROKER_URL
+              value: redis://redis:6379/0
+            - name: AIRFLOW__CELERY__RESULT_BACKEND
+              value: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+          ports:
+            - containerPort: 8080
+
+---
+# airflow-scheduler-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-scheduler
+  namespace: airflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-scheduler
+  template:
+    metadata:
+      labels:
+        app: airflow-scheduler
+    spec:
+      containers:
+        - name: airflow-scheduler
+          image: apache/airflow:2.5.1
+          command: ["airflow", "scheduler"]
+          env:
+            - name: AIRFLOW__CORE__EXECUTOR
+              value: CeleryExecutor
+            - name: AIRFLOW__CORE__SQL_ALCHEMY_CONN
+              value: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+            - name: AIRFLOW__CELERY__BROKER_URL
+              value: redis://redis:6379/0
+            - name: AIRFLOW__CELERY__RESULT_BACKEND
+              value: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+
+---

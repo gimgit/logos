@@ -22,8 +22,10 @@ fi
 
 # Apply Kubernetes manifests
 echo "3️⃣ Applying Kubernetes manifests..."
+kubectl apply -f namespace.yaml
 kubectl apply -f storage.yaml
-kubectl apply -f airflow-deployment.yaml
+kubectl apply -f cluster.yaml
+# kubectl apply -f airflow-deployment.yaml
 
 echo "Deployment is complete, its Lucky Vicky 🍀"
 

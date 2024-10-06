@@ -4,15 +4,14 @@ metadata:
   name: data-pv
 spec:
   capacity:
-    storage: 20Gi
+    storage: 10Gi
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/mnt/data"  # 로컬 스토리지 경로
-  storageClassName: standard
-  
+    path: "/tmp/data"
 
 ---
+  
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -22,5 +21,50 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 20Gi
-  storageClassName: standard
+      storage: 10Gi
+
+
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: airflow-pv
+# spec:
+#   capacity:
+#     storage: 20Gi
+#   accessModes:
+#     - ReadWriteOnce
+#   hostPath:
+#     path: "/mnt/data/airflow"  # Make sure this directory exists on your node
+#   storageClassName: ""
+
+# ---
+
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: airflow-pvc
+#   namespace: airflow
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 20Gi
+#   volumeName: airflow-pv
+#   storageClassName: ""
+
+# ---
+  
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: data-pv
+# spec:
+#   capacity:
+#     storage: 100Gi
+#   accessModes:
+#     - ReadWriteOnce
+#   hostPath:
+#     path: "/mnt/data/pipeline"  # Adjust path accordingly
+#   storageClassName: ""
+# # 
