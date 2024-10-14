@@ -27,7 +27,7 @@ kubectl apply -f storage.yaml
 kubectl apply -f cluster.yaml
 # kubectl apply -f airflow-deployment.yaml
 
-echo "Deployment is complete, its Lucky Vicky 🍀"
+echo "Deployment is completed, its Lucky Vicky 🍀"
 
 # Build the Docker image
 
